@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dukan PRO v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ============ VARIABLES ============ */
+:root {
+  --bg:#07100a; --surface:#0d1a10; --card:#111f14; --card2:#152019;
+  --border:#1c3022; --border2:#244030;
+  --green:#22c55e; --green2:#16a34a; --green3:#166534;
+  --gold:#f59e0b; --gold2:#b45309;
+  --red:#ef4444; --red2:#b91c1c;
+  --blue:#38bdf8; --blue2:#0284c7;
+  --purple:#a78bfa; --purple2:#7c3aed;
+  --text:#dff0e4; --muted:#527a5f; --muted2:#3a5a45;
+  --glass:rgba(13,26,16,0.85);
+  --radius:14px; --radius-sm:8px;
+  --shadow:0 8px 40px rgba(0,0,0,0.6);
+  --glow:0 0 30px rgba(34,197,94,0.15);
+}
+.light {
+  --bg:#f0f7f2; --surface:#e4f0e8; --card:#fff; --card2:#f5fbf7;
+  --border:#c8e0d0; --border2:#afd0be;
+  --text:#0f2a18; --muted:#4a7a5a; --muted2:#6a9a7a;
+  --glass:rgba(240,247,242,0.9);
+  --shadow:0 8px 40px rgba(0,0,0,0.12);
+  --glow:0 0 30px rgba(34,197,94,0.08);
+}
+
+/* ============ RESET ============ */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;min-height:100vh;transition:background 0.4s,color 0.4s;overflow-x:hidden;}
+
+/* ============ SIDEBAR ============ */
+.sidebar {
+  position:fixed;left:0;top:0;bottom:0;width:240px;
+  background:var(--surface);border-right:1px solid var(--border);
+  z-index:200;display:flex;flex-direction:column;
+  transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+  box-shadow:4px 0 30px rgba(0,0,0,0.4);
+}
+.sidebar.collapsed { transform:translateX(-240px); }
+.sidebar-logo {
+  padding:22px 20px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.sidebar-logo .logo-icon {
+  width:40px;height:40px;background:linear-gradient(135deg,var(--green2),var(--green3));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;box-shadow:0 4px 12px rgba(22,163,74,0.4);
+}
+.sidebar-logo h2 {font-family:'Bebas Neue';font-size:1.1rem;letter-spacing:2px;line-height:1.1;}
+.sidebar-logo p {font-size:0.65rem;color:var(--muted);letter-spacing:1px;}
+.sidebar-user {
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.user-avatar {
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+  flex-shrink:0;
+}
+.user-info {font-size:0.8rem;}
+.user-info strong {display:block;color:var(--text);font-size:0.85rem;}
+.user-info span {color:var(--muted);font-size:0.72rem;}
+.role-badge {
+  font-size:0.62rem;padding:2px 7px;border-radius:20px;font-weight:700;letter-spacing:0.5px;margin-top:2px;display:inline-block;
+}
+.role-admin{background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.3);}
+.role-worker{background:rgba(56,189,248,0.15);color:var(--blue);border:1px solid rgba(56,189,248,0.3);}
+.role-cashier{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+
+.nav-section {padding:10px 12px 4px;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.nav-item {
+  display:flex;align-items:center;gap:10px;padding:10px 16px;margin:2px 8px;
+  border-radius:var(--radius-sm);cursor:pointer;font-size:0.88rem;color:var(--muted);
+  transition:all 0.18s;border:none;background:none;width:calc(100% - 16px);text-align:left;
+  font-family:'Tajawal',sans-serif;
+}
+.nav-item:hover{background:var(--card);color:var(--text);}
+.nav-item.active{background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05));color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.nav-item .ni-icon{font-size:1.05rem;width:22px;text-align:center;}
+.nav-item .ni-badge{margin-left:auto;background:var(--red);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:10px;}
+
+.sidebar-footer{margin-top:auto;padding:12px 8px;border-top:1px solid var(--border);}
+
+/* ============ TOPBAR ============ */
+.topbar {
+  position:fixed;top:0;left:240px;right:0;height:60px;
+  background:var(--glass);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);z-index:150;
+  display:flex;align-items:center;padding:0 20px;gap:12px;
+  transition:left 0.35s cubic-bezier(.4,0,.2,1);
+}
+.topbar.full{left:0;}
+.menu-toggle {
+  background:none;border:1px solid var(--border);border-radius:8px;
+  color:var(--text);cursor:pointer;padding:7px 10px;font-size:1rem;transition:all 0.15s;
+}
+.menu-toggle:hover{border-color:var(--green);color:var(--green);}
+.topbar-title{font-family:'Bebas Neue';font-size:1.3rem;letter-spacing:2px;flex:1;}
+.search-box {
+  display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:10px;padding:6px 12px;
+  min-width:220px;transition:border-color 0.2s;
+}
+.search-box:focus-within{border-color:var(--green);}
+.search-box input {
+  background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;
+  font-size:0.9rem;outline:none;width:100%;
+}
+.search-box input::placeholder{color:var(--muted);}
+.topbar-actions{display:flex;align-items:center;gap:8px;}
+.icon-btn {
+  background:none;border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);cursor:pointer;padding:7px 10px;font-size:1rem;
+  transition:all 0.15s;position:relative;
+}
+.icon-btn:hover{border-color:var(--green);color:var(--green);}
+.notif-dot {
+  position:absolute;top:4px;right:4px;width:7px;height:7px;
+  background:var(--red);border-radius:50%;border:1.5px solid var(--bg);
+}
+
+/* ============ MAIN ============ */
+.main {margin-left:240px;padding-top:60px;min-height:100vh;transition:margin-left 0.35s cubic-bezier(.4,0,.2,1);}
+.main.full{margin-left:0;}
+.page{display:none;padding:24px 20px;}
+.page.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{margin-bottom:22px;}
+.page-header h1{font-family:'Bebas Neue';font-size:1.8rem;letter-spacing:3px;}
+.page-header p{color:var(--muted);font-size:0.85rem;margin-top:2px;}
+
+/* ============ CARDS ============ */
+.card {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
+  box-shadow:var(--shadow);
+}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-family:'Bebas Neue';font-size:1rem;letter-spacing:2px;color:var(--gold);display:flex;align-items:center;gap:7px;}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat-card {
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;position:relative;overflow:hidden;cursor:default;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--glow);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.sc-blue::before{background:var(--blue);}
+.stat-card.sc-gold::before{background:var(--gold);}
+.stat-card.sc-green::before{background:var(--green);}
+.stat-card.sc-red::before{background:var(--red);}
+.stat-card.sc-purple::before{background:var(--purple);}
+.stat-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.stat-value{font-family:'Bebas Neue';font-size:1.7rem;letter-spacing:1px;line-height:1;}
+.stat-card.sc-blue .stat-value{color:var(--blue);}
+.stat-card.sc-gold .stat-value{color:var(--gold);}
+.stat-card.sc-green .stat-value{color:var(--green);}
+.stat-card.sc-red .stat-value{color:var(--red);}
+.stat-card.sc-purple .stat-value{color:var(--purple);}
+.stat-sub{font-size:0.75rem;color:var(--muted);margin-top:5px;}
+.stat-icon{position:absolute;right:14px;top:14px;font-size:1.8rem;opacity:0.15;}
+.stat-change{font-size:0.72rem;margin-top:4px;display:flex;align-items:center;gap:3px;}
+.up{color:var(--green);} .dn{color:var(--red);}
+
+/* FORM */
+.form-grid{display:grid;gap:10px;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+label.lbl{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+input,select{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.93rem;
+  padding:9px 12px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;width:100%;
+}
+input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,0.1);}
+input::placeholder{color:var(--muted2);}
+select option{background:var(--surface);}
+.input-group{position:relative;}
+.input-prefix{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.9rem;pointer-events:none;}
+.input-group input{padding-left:28px;}
+
+/* BUTTONS */
+.btn{border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'Bebas Neue';font-size:0.95rem;letter-spacing:1px;padding:10px 18px;transition:all 0.15s;white-space:nowrap;}
+.btn-green{background:linear-gradient(135deg,var(--green2),var(--green3));color:#fff;}
+.btn-green:hover{background:linear-gradient(135deg,var(--green),var(--green2));transform:translateY(-1px);box-shadow:0 4px 16px rgba(34,197,94,0.3);}
+.btn-gold{background:linear-gradient(135deg,var(--gold2),#92400e);color:#fff;}
+.btn-gold:hover{background:linear-gradient(135deg,var(--gold),var(--gold2));}
+.btn-red{background:none;border:1px solid rgba(239,68,68,0.3);color:var(--red);font-family:'Tajawal',sans-serif;font-size:0.8rem;padding:5px 10px;border-radius:6px;}
+.btn-red:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.btn-blue{background:none;border:1px solid rgba(56,189,248,0.3);color:var(--blue);font-family:'Tajawal',sans-serif;font-size:0.8rem;padding:5px 10px;border-radius:6px;}
+.btn-blue:hover{background:var(--blue);color:#000;border-color:var(--blue);}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--muted);font-family:'Tajawal',sans-serif;font-size:0.85rem;padding:8px 14px;border-radius:var(--radius-sm);}
+.btn-outline:hover{border-color:var(--green);color:var(--green);}
+.btn-full{width:100%;}
+.btn-sm{padding:6px 12px;font-size:0.8rem;}
+
+/* QUICK */
+.quick-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.qbtn{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.8rem;padding:5px 13px;transition:all 0.15s;}
+.qbtn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:500px;}
+thead th{background:rgba(0,0,0,0.3);color:var(--muted);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);}
+thead th:first-child{text-align:left;}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.12s;}
+tbody tr:hover{background:var(--card2);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:11px 10px;font-size:0.88rem;text-align:right;vertical-align:middle;}
+td:first-child{text-align:left;}
+.c-gold{color:var(--gold);font-weight:700;}
+.c-green{color:var(--green);font-weight:700;}
+.c-red{color:var(--red);font-weight:700;}
+.c-blue{color:var(--blue);font-weight:700;}
+.c-purple{color:var(--purple);font-weight:700;}
+.c-muted{color:var(--muted);}
+.fw-bold{font-weight:800;color:#fff;}
+.badge{font-size:0.67rem;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--muted);margin-left:4px;}
+
+/* STOCK BADGE */
+.stock-ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green);border-radius:20px;font-size:0.7rem;padding:2px 8px;}
+.stock-low{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--gold);border-radius:20px;font-size:0.7rem;padding:2px 8px;animation:pulse 2s infinite;}
+.stock-out{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:20px;font-size:0.7rem;padding:2px 8px;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
+/* EMPTY */
+.empty-msg{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-msg .em-icon{font-size:3rem;display:block;margin-bottom:12px;opacity:0.4;}
+.empty-msg p{font-size:0.9rem;}
+
+/* PROGRESS BAR */
+.prog-wrap{background:var(--surface);border-radius:8px;height:10px;overflow:hidden;margin-top:6px;}
+.prog-fill{height:100%;border-radius:8px;transition:width 0.6s cubic-bezier(.4,0,.2,1);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.8);transform:scale(0.9);transition:transform 0.25s;}
+.modal-overlay.open .modal{transform:scale(1);}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-title{font-family:'Bebas Neue';font-size:1.2rem;letter-spacing:2px;color:var(--gold);}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:4px;}
+.modal-close:hover{color:var(--red);}
+
+/* RECEIPT MODAL */
+.receipt{background:#fff;color:#111;border-radius:10px;padding:20px;font-family:'Tajawal',sans-serif;}
+.receipt-header{text-align:center;border-bottom:2px dashed #ddd;padding-bottom:12px;margin-bottom:12px;}
+.receipt-header h2{font-size:1.3rem;font-weight:900;color:#111;}
+.receipt-header p{font-size:0.78rem;color:#555;margin-top:2px;}
+.receipt-row{display:flex;justify-content:space-between;font-size:0.82rem;padding:4px 0;border-bottom:1px solid #f0f0f0;}
+.receipt-row:last-child{border-bottom:none;}
+.receipt-total{display:flex;justify-content:space-between;font-weight:900;font-size:1.1rem;padding-top:10px;margin-top:8px;border-top:2px solid #111;}
+.receipt-footer{text-align:center;margin-top:12px;font-size:0.75rem;color:#888;}
+
+/* ALERT TOAST */
+.toast-container{position:fixed;top:70px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:12px 16px;min-width:240px;box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:10px;font-size:0.88rem;
+  animation:slideRight 0.3s ease;
+}
+@keyframes slideRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.toast.t-green{border-left:3px solid var(--green);}
+.toast.t-red{border-left:3px solid var(--red);}
+.toast.t-gold{border-left:3px solid var(--gold);}
+.toast-icon{font-size:1.1rem;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.chart-title{font-family:'Bebas Neue';font-size:0.95rem;letter-spacing:2px;color:var(--gold);margin-bottom:12px;}
+.chart-wrap{position:relative;height:200px;}
+
+/* FAB */
+.fab{
+  position:fixed;right:24px;bottom:28px;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),var(--green2));
+  border:none;color:#fff;font-size:1.6rem;cursor:pointer;
+  box-shadow:0 6px 24px rgba(34,197,94,0.4);
+  transition:all 0.2s;z-index:300;display:flex;align-items:center;justify-content:center;
+}
+.fab:hover{transform:scale(1.1) rotate(90deg);box-shadow:0 8px 32px rgba(34,197,94,0.5);}
+
+/* INVOICE PRINT */
+@media print{
+  .sidebar,.topbar,.fab,.toast-container,.modal-close,.no-print{display:none!important;}
+  .main{margin-left:0!important;}
+  body{background:#fff!important;color:#000!important;}
+  .receipt{box-shadow:none!important;}
+}
+
+/* ROLE GUARD */
+.role-hidden{display:none!important;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .charts-row{grid-template-columns:1fr;}
+  .sidebar{width:260px;}
+  .topbar{left:0!important;}
+  .main{margin-left:0!important;}
+  .sidebar:not(.collapsed){box-shadow:0 0 0 100vw rgba(0,0,0,0.5);}
+  .search-box{min-width:130px;}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .page{padding:16px 12px;}
+  .stat-value{font-size:1.3rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastCt"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🏪</div>
+    <div>
+      <h2>DUKAN PRO</h2>
+      <p>MANAGEMENT SYSTEM</p>
+    </div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">👤</div>
+    <div class="user-info">
+      <strong id="userNameDisplay">—</strong>
+      <span id="userRoleDisplay">—</span>
+      <span class="role-badge" id="userBadge">—</span>
+    </div>
+  </div>
+  <div class="nav-section">Xogta Dukanka</div>
+  <button class="nav-item active" onclick="nav('dashboard')"><span class="ni-icon">📊</span>Dashboard</button>
+  <button class="nav-item" onclick="nav('alaab')"><span class="ni-icon">📦</span>Alaabta<span class="ni-badge" id="alertBadge" style="display:none">!</span></button>
+  <button class="nav-item" onclick="nav('chart')"><span class="ni-icon">📈</span>Graafka</button>
+  <div class="nav-section admin-only">Maamulka</div>
+  <button class="nav-item admin-only" onclick="nav('users')"><span class="ni-icon">👥</span>Shaqaalaha</button>
+  <div class="nav-section">Kale</div>
+  <button class="nav-item" onclick="nav('receipt')"><span class="ni-icon">🧾</span>Risiidhka</button>
+  <div class="sidebar-footer">
+    <button class="nav-item" onclick="toggleTheme()"><span class="ni-icon" id="themeIcon">🌙</span><span id="themeLabel">Iftiinka</span></button>
+    <button class="nav-item" onclick="nav('login')"><span class="ni-icon">🔄</span>Beddel User-ka</button>
+  </div>
+</aside>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <div class="topbar-title" id="topTitle">DASHBOARD</div>
+  <div class="search-box">
+    <span style="color:var(--muted)">🔍</span>
+    <input type="text" id="globalSearch" placeholder="Raadi alaab..." oninput="doSearch(this.value)">
+  </div>
+  <div class="topbar-actions">
+    <button class="icon-btn" onclick="showReceipt()" title="Risiidhka">🧾</button>
+    <button class="icon-btn" onclick="exportData()" title="Download">⬇️</button>
+    <button class="icon-btn" id="notifBtn" title="Ogeysiisyo" onclick="nav('alaab')">
+      🔔<span class="notif-dot" id="notifDot" style="display:none"></span>
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+  <!-- ===== LOGIN PAGE ===== -->
+  <div class="page active" id="page-login" style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 60px);">
+    <div style="width:100%;max-width:380px;">
+      <div class="card">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:3rem;margin-bottom:8px;">🏪</div>
+          <h1 style="font-family:'Bebas Neue';font-size:2rem;letter-spacing:3px;">DUKAN PRO</h1>
+          <p style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Xulo doorashadaada</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-gold btn-full" onclick="login('admin','Ahmed Mohamed','Admin')" style="padding:14px;font-size:1rem;">
+            👑 ADMIN — Maamulaha
+          </button>
+          <button class="btn btn-blue btn-full no-print" onclick="login('worker','Faadumo Ali','Worker')" style="padding:14px;font-size:1rem;background:linear-gradient(135deg,var(--blue2),#075985);">
+            🛒 WORKER — Shaqaalaha
+          </button>
+          <button class="btn btn-green btn-full" onclick="login('cashier','Cabdi Warsame','Cashier')" style="padding:14px;font-size:1rem;">
+            💰 CASHIER — Khasnajiga
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div class="page" id="page-dashboard">
+    <div class="page-header">
+      <h1>📊 DASHBOARD</h1>
+      <p id="dashGreet">Ku soo dhawoow, maamule!</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card sc-blue">
+        <div class="stat-icon">💵</div>
+        <div class="stat-label">Lacagta Iibsiga</div>
+        <div class="stat-value" id="dCost">$0</div>
+        <div class="stat-sub" id="dCostSub">0 nooc</div>
+      </div>
+      <div class="stat-card sc-gold">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">Lacagta Iibka</div>
+        <div class="stat-value" id="dSell">$0</div>
+        <div class="stat-sub" id="dSellSub">0 xabo</div>
+      </div>
+      <div class="stat-card sc-green">
+        <div class="stat-icon">📈</div>
+        <div class="stat-label">Faaidada Guud</div>
+        <div class="stat-value" id="dProfit">$0</div>
+        <div class="stat-sub" id="dProfitPct">0%</div>
+      </div>
+      <div class="stat-card sc-red">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-label">Alaab Dhammaanaysa</div>
+        <div class="stat-value" id="dLow">0</div>
+        <div class="stat-sub">stock hoose</div>
+      </div>
+    </div>
+
+    <!-- Profit Bar -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-hd">
+        <div class="card-title">📈 Faaidada %</div>
+        <span class="c-green" id="dashProfitPct" style="font-family:'Bebas Neue';font-size:1.3rem;">0%</span>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-fill" id="dashBar" style="width:0%;background:linear-gradient(90deg,var(--green2),var(--green));"></div>
+      </div>
+    </div>
+
+    <!-- Top Items -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">🏆 Alaabta Faaidada Badan</div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="topTable">
+          <thead><tr>
+            <th>Alaabta</th><th>Tirada</th><th>Faaidada</th><th>%</th>
+          </tr></thead>
+          <tbody id="topBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ALAABTA PAGE ===== -->
+  <div class="page" id="page-alaab">
+    <div class="page-header">
+      <h1>📦 ALAABTA</h1>
+      <p>Maamul dhammaan alaabta dukanka</p>
+    </div>
+
+    <!-- Add Form -->
+    <div class="card" style="margin-bottom:16px;" id="addFormCard">
+      <div class="card-title" style="margin-bottom:14px;">➕ Kudar / Tafatir Alaab</div>
+      <div class="form-grid" style="grid-template-columns:2fr 0.8fr 1fr 1fr;gap:10px;align-items:end;">
+        <div class="fg">
+          <label class="lbl">Magaca Alaabta</label>
+          <input type="text" id="iName" placeholder="Tusaale: Cusbo" />
+        </div>
+        <div class="fg">
+          <label class="lbl">Tirada (Xabo)</label>
+          <input type="number" id="iQty" placeholder="5" min="0.1" step="0.1" />
+        </div>
+        <div class="fg">
+          <label class="lbl">Qiimaha Iibsiga</label>
+          <div class="input-group">
+            <span class="input-prefix">$</span>
+            <input type="number" id="iCost" placeholder="10" min="0" step="0.5" />
+          </div>
+        </div>
+        <div class="fg">
+          <label class="lbl">Qiimaha Iibka</label>
+          <div class="input-group">
+            <span class="input-prefix">$</span>
+            <input type="number" id="iSell" placeholder="15" min="0" step="0.5" />
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn btn-green" id="addBtn" onclick="addItem()">✚ KUDAR</button>
+        <button class="btn btn-outline" onclick="resetForm()">↺ DEMI</button>
+        <input type="hidden" id="editId" value="">
+      </div>
+      <div style="margin-top:12px;">
+        <label class="lbl">⚡ Degdeg:</label>
+        <div class="quick-wrap">
+          <button class="qbtn" onclick="q('Cusbo','🧂')">🧂 Cusbo</button>
+          <button class="qbtn" onclick="q('Bur','🌾')">🌾 Bur</button>
+          <button class="qbtn" onclick="q('Saliid','🛢️')">🛢️ Saliid</button>
+          <button class="qbtn" onclick="q('Sokor','🍬')">🍬 Sokor</button>
+          <button class="qbtn" onclick="q('Ugaali','🍚')">🍚 Ugaali</button>
+          <button class="qbtn" onclick="q('Biyo','💧')">💧 Biyo</button>
+          <button class="qbtn" onclick="q('Shaah','🍵')">🍵 Shaah</button>
+          <button class="qbtn" onclick="q('Caano','🥛')">🥛 Caano</button>
+          <button class="qbtn" onclick="q('Rooti','🍞')">🍞 Rooti</button>
+          <button class="qbtn" onclick="q('Hilib','🥩')">🥩 Hilib</button>
+          <button class="qbtn" onclick="q('Baasto','🍝')">🍝 Baasto</button>
+          <button class="qbtn" onclick="q('Basal','🧅')">🧅 Basal</button>
+          <button class="qbtn" onclick="q('Bariis','🌾')">🌾 Bariis</button>
+          <button class="qbtn" onclick="q('Sonkor','🟥')">🟥 Sonkor</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);flex-wrap:wrap;gap:8px;">
+        <div class="card-title" style="margin:0;">📋 Liiska Alaabta <span id="itemCount" style="font-family:'Tajawal';font-size:0.8rem;color:var(--muted);font-weight:400;">(0)</span></div>
+        <div style="display:flex;gap:7px;">
+          <button class="btn btn-outline btn-sm" onclick="showReceipt()">🧾 Risiidhka</button>
+          <button class="btn btn-red btn-sm admin-only" onclick="clearAll()">🗑️ Tirtir Wax Kasta</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>#  Magaca</th>
+            <th>Tirada</th>
+            <th>Stock</th>
+            <th>Iibsiga</th>
+            <th>Iibka</th>
+            <th>Cost Guud</th>
+            <th>Iib Guud</th>
+            <th>Faaiido</th>
+            <th class="no-print">Ficil</th>
+          </tr></thead>
+          <tbody id="listBody">
+            <tr><td colspan="9"><div class="empty-msg"><span class="em-icon">🛍️</span><p>Wali alaab lama darin</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHARTS PAGE ===== -->
+  <div class="page" id="page-chart">
+    <div class="page-header"><h1>📈 GRAAFKA</h1><p>Muuqaalka xogta dukanka</p></div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">💰 Isbarbar Dhiga</div>
+        <div class="chart-wrap"><canvas id="chartBar"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📊 Faaidada %</div>
+        <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📦 Stock Alaab Kasta</div>
+      <div class="chart-wrap" style="height:250px;"><canvas id="chartStock"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== USERS PAGE ===== -->
+  <div class="page" id="page-users">
+    <div class="page-header"><h1>👥 SHAQAALAHA</h1><p>Maamul shaqaalaha iyo doorashooyinkooda</p></div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card sc-gold"><div class="stat-icon">👑</div><div class="stat-label">Admins</div><div class="stat-value">1</div></div>
+      <div class="stat-card sc-blue"><div class="stat-icon">🛒</div><div class="stat-label">Workers</div><div class="stat-value">2</div></div>
+      <div class="stat-card sc-green"><div class="stat-icon">💰</div><div class="stat-label">Cashiers</div><div class="stat-value">3</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">👥 Liiska Shaqaalaha</div>
+      <table>
+        <thead><tr><th>Magaca</th><th>Role-ka</th><th>Xuquuqda</th></tr></thead>
+        <tbody>
+          <tr><td>Ahmed Mohamed</td><td><span class="role-badge role-admin">Admin</span></td><td class="c-green">Wax walba</td></tr>
+          <tr><td>Faadumo Ali</td><td><span class="role-badge role-worker">Worker</span></td><td class="c-blue">Kudar, Tafatir</td></tr>
+          <tr><td>Cabdi Warsame</td><td><span class="role-badge role-cashier">Cashier</span></td><td class="c-gold">Arag kaliya, Risiidhka</td></tr>
+          <tr><td>Hodan Hassan</td><td><span class="role-badge role-worker">Worker</span></td><td class="c-blue">Kudar, Tafatir</td></tr>
+          <tr><td>Mustafa Omar</td><td><span class="role-badge role-cashier">Cashier</span></td><td class="c-gold">Arag kaliya, Risiidhka</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== RECEIPT PAGE ===== -->
+  <div class="page" id="page-receipt">
+    <div class="page-header"><h1>🧾 RISIIDHKA</h1><p>U diyaari macmiilka rasiidka</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">🏪 Xogta Dukanka</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fg"><label class="lbl">Magaca Dukanka</label><input type="text" id="shopName" value="Dukaan Soomaaliyeed" /></div>
+          <div class="fg"><label class="lbl">Telefoonka</label><input type="text" id="shopPhone" value="+252 61 000 0000" /></div>
+          <div class="fg"><label class="lbl">Ciwaanka</label><input type="text" id="shopAddr" value="Mogadishu, Somalia" /></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-green" onclick="printReceipt()">🖨️ DAABI</button>
+          <button class="btn btn-gold" onclick="downloadReceipt()">⬇️ SAVE PDF</button>
+        </div>
+      </div>
+      <div id="receiptPreview"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- FAB -->
+<button class="fab no-print" onclick="nav('alaab')" title="Kudar Alaab">＋</button>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">✏️ TAFATIR ALAABTA</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="fg"><label class="lbl">Magaca</label><input type="text" id="eN" /></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div class="fg"><label class="lbl">Tirada</label><input type="number" id="eQ" min="0.1" step="0.1" /></div>
+        <div class="fg"><label class="lbl">Iibsiga ($)</label><input type="number" id="eC" min="0" step="0.5" /></div>
+        <div class="fg"><label class="lbl">Iibka ($)</label><input type="number" id="eS" min="0" step="0.5" /></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-green btn-full" onclick="saveEdit()">💾 KAYDI</button>
+      <button class="btn btn-outline" onclick="closeModal()">JOOJI</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================
+   STATE
+=========================== */
+let items = [];
+let nid = 1;
+let currentUser = null;
+let sidebarOpen = true;
+let charts = {};
+let editingId = null;
+const LOW_STOCK = 3;
+
+const ICONS = {
+  'Cusbo':'🧂','Bur':'🌾','Saliid':'🛢️','Sokor':'🍬','Ugaali':'🍚',
+  'Biyo':'💧','Shaah':'🍵','Caano':'🥛','Rooti':'🍞','Hilib':'🥩',
+  'Baasto':'🍝','Basal':'🧅','Bariis':'🌾','Sonkor':'🟥','Ugaali':'🍚'
+};
+function icon(n){ return ICONS[n] || '🛒'; }
+
+/* ===========================
+   LOCAL STORAGE
+=========================== */
+function saveLS(){ try { localStorage.setItem('dukan_items_v3', JSON.stringify(items)); localStorage.setItem('dukan_nid', nid); } catch(e){} }
+function loadLS(){
+  try {
+    const d = localStorage.getItem('dukan_items_v3');
+    if(d) items = JSON.parse(d);
+    const n = localStorage.getItem('dukan_nid');
+    if(n) nid = parseInt(n);
+  } catch(e){ items=[]; nid=1; }
+}
+
+/* ===========================
+   AUTH / ROLES
+=========================== */
+function login(role, name, label){
+  currentUser = { role, name, label };
+  document.getElementById('userNameDisplay').textContent = name;
+  document.getElementById('userRoleDisplay').textContent = label;
+  const b = document.getElementById('userBadge');
+  b.textContent = label;
+  b.className = 'role-badge role-'+role;
+  const avatars = {admin:'👑', worker:'🛒', cashier:'💰'};
+  document.getElementById('userAvatar').textContent = avatars[role]||'👤';
+
+  // Role-based UI
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.style.display = role==='admin' ? '' : 'none';
+  });
+  // Cashier can't add
+  if(role==='cashier'){
+    document.getElementById('addFormCard').style.display='none';
+  } else {
+    document.getElementById('addFormCard').style.display='';
+  }
+
+  nav('dashboard');
+}
+
+/* ===========================
+   NAVIGATION
+=========================== */
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  const pg = document.getElementById('page-'+page);
+  if(pg) pg.classList.add('active');
+
+  const titles = {
+    dashboard:'DASHBOARD', alaab:'ALAABTA', chart:'GRAAFKA',
+    users:'SHAQAALAHA', receipt:'RISIIDHKA', login:'GELI'
+  };
+  document.getElementById('topTitle').textContent = titles[page]||page.toUpperCase();
+
+  // activate nav item
+  document.querySelectorAll('.nav-item').forEach(b=>{
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+page+"'"))
+      b.classList.add('active');
+  });
+
+  if(page==='chart') setTimeout(renderCharts, 100);
+  if(page==='dashboard') renderDash();
+  if(page==='receipt') renderReceiptPreview();
+  if(page==='alaab') renderList();
+
+  // Mobile: close sidebar
+  if(window.innerWidth<=768) toggleSidebar(false);
+}
+
+/* ===========================
+   SIDEBAR
+=========================== */
+function toggleSidebar(force){
+  const sb = document.getElementById('sidebar');
+  const tb = document.getElementById('topbar');
+  const mn = document.getElementById('main');
+  if(force === false || sidebarOpen){
+    sb.classList.add('collapsed');
+    tb.classList.add('full');
+    mn.classList.add('full');
+    sidebarOpen = false;
+  } else {
+    sb.classList.remove('collapsed');
+    tb.classList.remove('full');
+    mn.classList.remove('full');
+    sidebarOpen = true;
+  }
+}
+
+/* ===========================
+   THEME
+=========================== */
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  const isLight = document.body.classList.contains('light');
+  document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isLight ? 'Mugdiga' : 'Iftiinka';
+  localStorage.setItem('dukan_theme', isLight ? 'light' : 'dark');
+  if(Object.keys(charts).length) setTimeout(renderCharts, 100);
+}
+
+/* ===========================
+   FORMAT
+=========================== */
+function fmt(v){ return '$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtN(v){ return Number(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:1}); }
+
+/* ===========================
+   QUICK FILL
+=========================== */
+function q(name){
+  document.getElementById('iName').value = name;
+  document.getElementById('iQty').value = '5';
+  document.getElementById('iCost').value = '10';
+  document.getElementById('iSell').focus();
+}
+
+/* ===========================
+   ADD / EDIT ITEM
+=========================== */
+function addItem(){
+  const name = document.getElementById('iName').value.trim();
+  const qty  = parseFloat(document.getElementById('iQty').value)||1;
+  const cost = parseFloat(document.getElementById('iCost').value)||0;
+  const sell = parseFloat(document.getElementById('iSell').value)||0;
+
+  if(!name){ flashInput('iName'); return; }
+
+  const editId = document.getElementById('editId').value;
+  if(editId){
+    const it = items.find(i=>i.id==editId);
+    if(it){ Object.assign(it,{name,qty,cost,sell,totalCost:qty*cost,totalSell:qty*sell,profit:qty*(sell-cost)}); }
+    toast('✏️ '+name+' la tafatiray!','t-gold');
+    resetForm();
+  } else {
+    items.push({id:nid++, name, qty, cost, sell, totalCost:qty*cost, totalSell:qty*sell, profit:qty*(sell-cost)});
+    toast(icon(name)+' '+name+' la daray!','t-green');
+    // Reset
+    ['iName','iQty','iCost','iSell'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('iName').focus();
+  }
+
+  saveLS();
+  checkAlerts();
+  renderList();
+  renderDash();
+}
+
+function resetForm(){
+  ['iName','iQty','iCost','iSell'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('editId').value='';
+  document.getElementById('addBtn').textContent='✚ KUDAR';
+  editingId=null;
+}
+
+function removeItem(id){
+  const it = items.find(i=>i.id===id);
+  items = items.filter(i=>i.id!==id);
+  if(it) toast('🗑️ '+it.name+' la tirtiray','t-red');
+  saveLS(); checkAlerts(); renderList(); renderDash();
+}
+
+function editItem(id){
+  const it = items.find(i=>i.id===id);
+  if(!it) return;
+  document.getElementById('eN').value=it.name;
+  document.getElementById('eQ').value=it.qty;
+  document.getElementById('eC').value=it.cost;
+  document.getElementById('eS').value=it.sell;
+  editingId=id;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function saveEdit(){
+  const it = items.find(i=>i.id===editingId);
+  if(!it){closeModal();return;}
+  it.name=document.getElementById('eN').value.trim()||it.name;
+  it.qty=parseFloat(document.getElementById('eQ').value)||it.qty;
+  it.cost=parseFloat(document.getElementById('eC').value)||it.cost;
+  it.sell=parseFloat(document.getElementById('eS').value)||it.sell;
+  it.totalCost=it.qty*it.cost; it.totalSell=it.qty*it.sell; it.profit=it.qty*(it.sell-it.cost);
+  saveLS(); renderList(); renderDash(); checkAlerts();
+  toast('✅ '+it.name+' la hagaajiyay','t-green');
+  closeModal();
+}
+
+function closeModal(){ document.getElementById('editModal').classList.remove('open'); editingId=null; }
+
+function clearAll(){
+  if(!items.length) return;
+  if(confirm('Ma hubtaa inaad tirtirto dhammaan alaabta?')){
+    items=[]; saveLS(); renderList(); renderDash(); checkAlerts();
+    toast('🗑️ Dhammaan alaabta la tirtiray','t-red');
+  }
+}
+
+/* ===========================
+   SEARCH
+=========================== */
+function doSearch(val){
+  const q2=val.toLowerCase().trim();
+  const rows=document.querySelectorAll('#listBody tr');
+  rows.forEach(r=>{
+    if(!q2){r.style.display='';return;}
+    const t=r.textContent.toLowerCase();
+    r.style.display=t.includes(q2)?'':'none';
+  });
+}
+
+/* ===========================
+   RENDER LIST
+=========================== */
+function renderList(){
+  const b=document.getElementById('listBody');
+  document.getElementById('itemCount').textContent='('+items.length+')';
+  if(!items.length){
+    b.innerHTML=`<tr><td colspan="9"><div class="empty-msg"><span class="em-icon">🛍️</span><p>Wali alaab lama darin</p></div></td></tr>`;
+    return;
+  }
+
+  const canEdit = currentUser && currentUser.role!=='cashier';
+
+  b.innerHTML=items.map((it,i)=>{
+    const prof=it.totalSell-it.totalCost;
+    const pc=prof>=0?'c-green':'c-red';
+    const stk=it.qty<=0?`<span class="stock-out">Dhammaatay</span>`:it.qty<=LOW_STOCK?`<span class="stock-low">⚠️ Yar</span>`:`<span class="stock-ok">✅ OK</span>`;
+    const editBtns = canEdit ? `
+      <button class="btn btn-blue" onclick="editItem(${it.id})">✏️</button>
+      <button class="btn btn-red" onclick="removeItem(${it.id})">✕</button>` : '';
+    return `<tr>
+      <td><span style="color:var(--muted);margin-right:4px;">${i+1}.</span> ${icon(it.name)} <strong>${it.name}</strong></td>
+      <td>${fmtN(it.qty)} <span class="badge">xabo</span></td>
+      <td>${stk}</td>
+      <td class="c-blue">${fmt(it.cost)}</td>
+      <td class="c-gold">${fmt(it.sell)}</td>
+      <td class="c-blue">${fmt(it.totalCost)}</td>
+      <td class="c-gold">${fmt(it.totalSell)}</td>
+      <td class="${pc}">${fmt(prof)}</td>
+      <td class="no-print" style="display:flex;gap:5px;align-items:center;justify-content:flex-end;">${editBtns}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ===========================
+   RENDER DASHBOARD
+=========================== */
+function renderDash(){
+  const totalCost=items.reduce((s,i)=>s+i.totalCost,0);
+  const totalSell=items.reduce((s,i)=>s+i.totalSell,0);
+  const profit=totalSell-totalCost;
+  const totalQty=items.reduce((s,i)=>s+i.qty,0);
+  const pct=totalCost>0?(profit/totalCost*100):0;
+  const lowCount=items.filter(i=>i.qty<=LOW_STOCK).length;
+
+  document.getElementById('dCost').textContent=fmt(totalCost);
+  document.getElementById('dCostSub').textContent=items.length+' nooc';
+  document.getElementById('dSell').textContent=fmt(totalSell);
+  document.getElementById('dSellSub').textContent=fmtN(totalQty)+' xabo guud';
+  document.getElementById('dProfit').textContent=fmt(Math.max(0,profit));
+  document.getElementById('dProfitPct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('dLow').textContent=lowCount;
+  document.getElementById('dashProfitPct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('dashBar').style.width=Math.min(100,Math.max(0,pct))+'%';
+
+  document.getElementById('dashGreet').textContent=
+    `Ku soo dhawoow, ${currentUser?currentUser.name:'maamule'}! | ${new Date().toLocaleDateString('so-SO')}`;
+
+  // Top items
+  const sorted=[...items].sort((a,b)=>(b.totalSell-b.totalCost)-(a.totalSell-a.totalCost)).slice(0,5);
+  const tb=document.getElementById('topBody');
+  if(!sorted.length){
+    tb.innerHTML=`<tr><td colspan="4"><div class="empty-msg" style="padding:20px;"><p>Wali alaab ma jirto</p></div></td></tr>`;
+    return;
+  }
+  const maxP=sorted[0]?sorted[0].totalSell-sorted[0].totalCost:1;
+  tb.innerHTML=sorted.map((it,i)=>{
+    const p=it.totalSell-it.totalCost;
+    const pct2=it.cost>0?((it.sell-it.cost)/it.cost*100):0;
+    const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+    return `<tr>
+      <td>${medals[i]||''} ${icon(it.name)} ${it.name}</td>
+      <td>${fmtN(it.qty)} xabo</td>
+      <td class="${p>=0?'c-green':'c-red'}">${fmt(p)}</td>
+      <td class="${p>=0?'c-green':'c-red'}">${pct2.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ===========================
+   STOCK ALERTS
+=========================== */
+function checkAlerts(){
+  const low=items.filter(i=>i.qty<=LOW_STOCK);
+  const dot=document.getElementById('notifDot');
+  const badge=document.getElementById('alertBadge');
+  if(low.length>0){
+    dot.style.display='block';
+    badge.style.display='inline';
+    badge.textContent=low.length;
+  } else {
+    dot.style.display='none';
+    badge.style.display='none';
+  }
+}
+
+/* ===========================
+   CHARTS
+=========================== */
+function renderCharts(){
+  const isLight=document.body.classList.contains('light');
+  const textColor=isLight?'#0f2a18':'#dff0e4';
+  const gridColor=isLight?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.05)';
+  Chart.defaults.color=textColor;
+
+  const names=items.map(i=>i.name);
+  const costs=items.map(i=>i.totalCost);
+  const sells=items.map(i=>i.totalSell);
+  const profits=items.map(i=>i.totalSell-i.totalCost);
+  const qtys=items.map(i=>i.qty);
+
+  const chartOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:textColor,font:{family:'Tajawal',size:11}}}}};
+
+  // Destroy old
+  Object.values(charts).forEach(c=>c.destroy&&c.destroy());
+
+  // BAR CHART
+  charts.bar=new Chart(document.getElementById('chartBar'),{
+    type:'bar',
+    data:{
+      labels:names,
+      datasets:[
+        {label:'Iibsiga',data:costs,backgroundColor:'rgba(56,189,248,0.7)',borderColor:'#38bdf8',borderWidth:1,borderRadius:6},
+        {label:'Iibka',data:sells,backgroundColor:'rgba(245,158,11,0.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:6},
+        {label:'Faaiido',data:profits,backgroundColor:'rgba(34,197,94,0.7)',borderColor:'#22c55e',borderWidth:1,borderRadius:6},
+      ]
+    },
+    options:{...chartOpts,scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor},grid:{color:gridColor}}}}
+  });
+
+  // PIE
+  const pColors=['#22c55e','#f59e0b','#38bdf8','#ef4444','#a78bfa','#fb923c','#34d399','#f472b6'];
+  charts.pie=new Chart(document.getElementById('chartPie'),{
+    type:'doughnut',
+    data:{
+      labels:names,
+      datasets:[{data:profits.map(p=>Math.max(0,p)),backgroundColor:pColors,borderWidth:2,borderColor:isLight?'#fff':'#07100a'}]
+    },
+    options:{...chartOpts,cutout:'65%'}
+  });
+
+  // STOCK BAR
+  charts.stock=new Chart(document.getElementById('chartStock'),{
+    type:'bar',
+    data:{
+      labels:names,
+      datasets:[{
+        label:'Tirada (Xabo)',
+        data:qtys,
+        backgroundColor:qtys.map(q=>q<=LOW_STOCK?'rgba(239,68,68,0.7)':'rgba(34,197,94,0.7)'),
+        borderColor:qtys.map(q=>q<=LOW_STOCK?'#ef4444':'#22c55e'),
+        borderWidth:1,borderRadius:6
+      }]
+    },
+    options:{...chartOpts,indexAxis:'y',scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor},grid:{color:gridColor}}}}
+  });
+}
+
+/* ===========================
+   RECEIPT
+=========================== */
+function renderReceiptPreview(){
+  const shopName=document.getElementById('shopName')?.value||'Dukaan';
+  const phone=document.getElementById('shopPhone')?.value||'';
+  const addr=document.getElementById('shopAddr')?.value||'';
+  const totalCost=items.reduce((s,i)=>s+i.totalCost,0);
+  const totalSell=items.reduce((s,i)=>s+i.totalSell,0);
+  const profit=totalSell-totalCost;
+  const now=new Date();
+
+  const rows=items.map((it,i)=>
+    `<div class="receipt-row">
+      <span>${i+1}. ${it.name} x${fmtN(it.qty)}</span>
+      <span>${fmt(it.totalSell)}</span>
+    </div>`
+  ).join('');
+
+  document.getElementById('receiptPreview').innerHTML=`
+  <div class="receipt" id="receiptEl">
+    <div class="receipt-header">
+      <h2>${shopName}</h2>
+      <p>${phone} | ${addr}</p>
+      <p style="font-size:0.72rem;color:#888;margin-top:4px;">${now.toLocaleString()}</p>
+    </div>
+    ${rows||'<p style="text-align:center;color:#999;font-size:0.82rem;padding:10px;">Alaab ma jirto</p>'}
+    <div style="margin-top:10px;">
+      <div class="receipt-row"><span>Iibsiga (Cost)</span><span>${fmt(totalCost)}</span></div>
+      <div class="receipt-row"><span>Iibka (Sell)</span><span>${fmt(totalSell)}</span></div>
+    </div>
+    <div class="receipt-total">
+      <span>FAAIDADA GUUD</span>
+      <span style="color:${profit>=0?'#16a34a':'#dc2626'}">${fmt(profit)}</span>
+    </div>
+    <div class="receipt-footer">Mahadsanid iibsigaaga! · Dukan PRO v3</div>
+  </div>`;
+}
+
+function showReceipt(){ nav('receipt'); }
+
+function printReceipt(){
+  renderReceiptPreview();
+  setTimeout(()=>window.print(),200);
+}
+
+function downloadReceipt(){
+  renderReceiptPreview();
+  toast('📥 Kaydinta... isticmaal Print → Save as PDF','t-gold');
+  setTimeout(()=>window.print(),300);
+}
+
+/* ===========================
+   EXPORT
+=========================== */
+function exportData(){
+  if(!items.length){toast('⚠️ Alaab ma jirto','t-red');return;}
+  const rows=[['#','Magaca','Tirada','Iibsiga','Iibka','Cost Guud','Iib Guud','Faaiido']];
+  items.forEach((it,i)=>{
+    const p=it.totalSell-it.totalCost;
+    rows.push([i+1,it.name,it.qty,it.cost,it.sell,it.totalCost,it.totalSell,p]);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='dukan-xisaab.csv';
+  a.click();
+  toast('📥 CSV la degay!','t-green');
+}
+
+/* ===========================
+   TOAST
+=========================== */
+function toast(msg, type='t-green'){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span class="toast-icon">${type==='t-green'?'✅':type==='t-red'?'❌':'⚠️'}</span><span>${msg}</span>`;
+  document.getElementById('toastCt').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(30px)';el.style.transition='all 0.3s';setTimeout(()=>el.remove(),300);},2800);
+}
+
+function flashInput(id){
+  const el=document.getElementById(id);
+  el.style.borderColor='var(--red)';
+  el.focus();
+  setTimeout(()=>el.style.borderColor='',1200);
+}
+
+/* ===========================
+   KEYBOARD
+=========================== */
+['iName','iQty','iCost'].forEach((id,i)=>{
+  const ids=['iName','iQty','iCost','iSell'];
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById(ids[i+1])?.focus(); });
+});
+const iSell=document.getElementById('iSell');
+if(iSell) iSell.addEventListener('keydown',e=>{ if(e.key==='Enter') addItem(); });
+document.getElementById('editModal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+/* ===========================
+   INIT
+=========================== */
+(function init(){
+  loadLS();
+  const savedTheme=localStorage.getItem('dukan_theme');
+  if(savedTheme==='light'){ document.body.classList.add('light'); document.getElementById('themeIcon').textContent='☀️'; document.getElementById('themeLabel').textContent='Mugdiga'; }
+  // Start at login
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const lg=document.getElementById('page-login');
+  if(lg) lg.classList.add('active');
+  document.getElementById('topTitle').textContent='GELI';
+  // Mobile sidebar default closed
+  if(window.innerWidth<=768) toggleSidebar(false);
+})();
+</script>
+</body>
+</html>
